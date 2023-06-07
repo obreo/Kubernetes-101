@@ -1,6 +1,7 @@
 # Kubernetes-101
 Learn the basics of Kubernetes 
 This tutorial is based on this video:
+
 https://www.youtube.com/watch?v=s_o8dwzRlu4
 
 ## Introduction
