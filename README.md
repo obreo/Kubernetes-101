@@ -75,6 +75,10 @@ kubectl -h
 ### Write your first application
 This is a demo based on this [tutorial](https://www.youtube.com/watch?v=s_o8dwzRlu4) which will be demonstrated in detail:
 
+The containers used are:
+1. [Web App](https://hub.docker.com/r/nanajanashia/k8s-demo-app)
+2. [Mongo DB](https://hub.docker.com/_/mongo)
+
 We'll create an application in two seperate pods, where one pod will contain a web application and the other will contain a databse container.
 
 #### Step #1 - Create the ConfigMap for the web app container:
@@ -134,14 +138,73 @@ spec:
         env:                      # Environmment variables related to the image
         - name: MONGO_INITDB_ROOT_USERNAME
           valueFrom:
-            secretKeyRef:
+            secretKeyRef:         # Refering to the secret file's name as labaled
               name: mongo-secret
-              key: username
+              key: username       # Key name as defined in the secret key for the username
         - name: MONGO_INITDB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               name: mongo-secret
-              key: password
+              key: password     # Key name as defined in the secret key for the password
+
+
+---                       # Three dashes refer toa new YAML script
+# Service configuration
+
+apiVersion: v1
+kind: Service             # Type: service           
+metadata:
+  name: mongo-service   # Name of service, as we referred it in the configMap
+spec:
+  selector:             # Matching the label name of selector in the label in the Deployment configuration.
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017        # Listener port
+      targetPort: 27017  # forward port: the one assigned in the pod's configurations for the container
+```
+#### Step #4 - Create a deployment file for the web application's pod and a service as a static IP to link it with our deployment:
+
+This will be a bit different as we will add extra parameters to assign an external service IP for the clients to access. This will used a parameter called `NordPort` The rest will be the same as above:
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  labels:
+    app: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:    # matches the label in pod conf with deployment conf
+      app: webapp
+  template:         # Configure the pod
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: nanajanashia/k8s-demo-app:v1.0   # docker image
+        ports:
+        - containerPort: 3000
+        env:
+        - name: USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret      # key name of metadata in secret file
+              key: username             # keyname of username
+        - name: USER_PWD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: password             # keyname of password
+        - name: DB_URL                  
+          valueFrom:
+            configMapKeyRef:            # keyname of Mongo's configMap which has data for the assigned Service of Mongo deployment
+              name: mongo-app           # key name of metadata in configMAp file
+              key: mongo-url            # key name 
 
 
 ---
@@ -150,12 +213,33 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongo-service   # name of service, and can be used similar to the data element in configmap to connect the pod with it.
+  name: webapp-service   # Label of the Service as a reference
 spec:
-  selector:             # Matching the label name of selector in the mongo deployment yml.
-    app: mongo
+  type: NodePort        # Two types of ip access: internal = Default , External = NodePort, external ports allowed from [30000 - 32767]
+  selector:             # Matching the label name in the webapp deployment label.
+    app: webapp
   ports:
     - protocol: TCP
-      port: 27017          # Listener port
-      targetPort: 27017  # forward port: the one mentioned in the deployment file for container
+      port: 3000        # Listener port
+      targetPort: 3000  # forward port: the one mentioned in the deployment file for container
+      nodePort: 30000   # External IP port
+```
+
+As we can see, to connect a deployment with other deployment we use the ConfigMap and the Secret scripts which share the data required of the Service and other key-value pairs registered. So in summary, A single deployment has it Pods and Service configuration. While to connect two depolyments - or Pods of different deployment - together, we will depend on configMap and Secret scripts.
+
+
+Once finished, to deploy the Node's setup, we will run each script using Kubectl:
+
+```
+kubectl apply -f [SCRIPT.yml]
+```
+
+To monitor your deploymnets that are running:
+```
+kubectl get all
+```
+
+To check the external and internal IPs of your Pods:
+```
+kubectl get node -o wide
 ```
