@@ -77,4 +77,85 @@ This is a demo based on this [tutorial](https://www.youtube.com/watch?v=s_o8dwzR
 
 We'll create an application in two seperate pods, where one pod will contain a web application and the other will contain a databse container.
 
-# Step #1
+#### Step #1 - Create the ConfigMap for the web app container:
+
+This is used to set the static IP endpoint from the service to the configMap which will be used as the main URL for the database by the web app:
+`mongo-configmap.yml `
+
+```
+apiVersion: v1
+kind: ConfigMap                 # The type of script, there are different ones as pod, deployment, secret, service and more.
+metadata:
+  name: mongo-app               # labeling is important to refer to the script in other configuration components.
+data:                           # Here is where you can configure the data you want for your app using key - value pairs.
+  mongo-url: mongo-service      # This will represent the service to be used as endpoint
+```
+#### Step #2 - Create a Secrets file in which we will store the username and password data:
+`mongo-secret.yml`
+
+```
+apiVersion: v1
+kind: Secret                    # The type of element
+metadata:
+  name: mongo-secret            # This label will be used as a reference
+type: Opaque                    # Default type for storing secret data
+data:
+  username: YWRtaW4=            # Your data input.
+  password: cGFzc3dvcmQ=
+
+```
+
+#### Step #3 - Create a deployment file for the database pod and a service as a static IP to link it with our deployment:
+
+```
+# Deployment of Mongo databse:
+
+apiVersion: apps/v1           # Deployment configuration
+kind: Deployment                #Type - Deployment
+metadata:
+  name: mongo-deployment        # Label for the Deployment script
+  labels:                       # This is a label that represents the depolyment configuration to be matched with the pod configuration below
+    app: mongo
+spec:
+  replicas: 1                   # Replicas of the pods, because it's a database, one replica is recommended, otherwise use stateful deployment.
+  selector:                     # This will match the pod's app label with the deployment's app label
+    matchLabels:
+      app: mongo
+  template:                   # Pod configuration
+    metadata:
+      labels:                   # This is a label that represents the pod's configuration to be matched with the deployment configuration above
+        app: mongo
+    spec:
+      containers:               # Containers to be installed on the pod
+      - name: mongodb             # docker container's name
+        image: mongo:6.0          # docker image - as stated in the dockerhub repository
+        ports:                    # Port assigned to the container
+        - containerPort: 27017
+        env:                      # Environmment variables related to the image
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: password
+
+
+---
+# service configuration
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service   # name of service, and can be used similar to the data element in configmap to connect the pod with it.
+spec:
+  selector:             # Matching the label name of selector in the mongo deployment yml.
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017          # Listener port
+      targetPort: 27017  # forward port: the one mentioned in the deployment file for container
+```
