@@ -22,3 +22,12 @@ Within these two elements, there are a number of components that work for each o
 4. Etcd: It saves and configures the key-value data used to configure the kubernetes cluster. The data stored and retrieved by the K8 configuration files use etcd as a source. Such as service definitions, Deployments, ConfigMaps, Secrets which will be discussed later in the article.
 
 ### Worker node components:
+1. Pod: It's the smallest element in a node and used as a layer for a container or group of containers, A single pod represents an application in the node. Each pod has an IP that provides connectivity to the pod and communication between containers assigned in the Pod or with other Pods. However, if a Pod is rescheduled or replaced then its IP will change. To solve this issue we can provide another component that connect to the pod or deployment - will be discussed below - called a Service.
+2. Service: A static IP endpoint for a pod or a number of pods that can be accessed inernally and externally. This helps the application to retain the ip endpoint even if a replacement or rescheduling occured to the pods. This helps pods - together - and clients to communicate without connectivity disturbance.
+3. Deployment: Another layer component used over the pod's layer, which is used to configure the pod with more flexibility, particularly to increase the high availability of the pods by creating replicas within the node or multiple nodes - using the Scheduler.
+
+#### Other Core components related to Worker node:
+1. ConfigMap: 
+2. Secrets:
+
+### Persistent Storage Types:
