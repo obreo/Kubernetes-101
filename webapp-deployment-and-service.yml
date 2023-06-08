@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  labels:
+    app: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:    # matches the label in pod conf with deployment conf
+      app: webapp
+  template:       # Configure the pod
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: nanajanashia/k8s-demo-app:v1.0   # docker image
+        ports:
+        - containerPort: 3000
+        env:
+        - name: USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret      # key name of metadata in secret file
+              key: username           # keyname of username
+        - name: USER_PWD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: password
+        - name: DB_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-app           # key name of metadata in configMAp file
+              key: mongo-url            # key name 
+
+
+---
+# service configuration
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-service   
+spec:
+  type: NodePort        # Two types of ip access: internal = Default , External = NodePort port from 30000 - 32767
+  selector:             # Matching the label name of selector in the mongo deployment yml.
+    app: webapp
+  ports:
+    - protocol: TCP
+      port: 3000          # Listener port
+      targetPort: 3000  # forward port: the one mentioned in the deployment file for container
+      nodePort: 30000

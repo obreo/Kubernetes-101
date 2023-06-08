@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-app   
+data:
+  mongo-url: mongo-service
+  
