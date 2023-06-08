@@ -1,8 +1,6 @@
 # Kubernetes-101
 Learn the basics of Kubernetes 
-This tutorial is based on this video:
 
-https://www.youtube.com/watch?v=s_o8dwzRlu4
 
 ## Introduction
 Kubernetes (K8) is an orchestration management tool, which is used to manage containers at a larger scale setup. It ensures high availability by scaling in and out the applications as much as it suits the project. 
@@ -39,6 +37,44 @@ The data stored in K8 is ephemeral. This means it is temporary and can be lost o
 ### Setup
 The easiest and most direct way to setup a kubernetes cluster is to use [Minikube](https://minikube.sigs.k8s.io) or using cloud services as AWS EKS and similar services in other cloud providers. This blog considers using minikube for its ease and its installation is demonstrated in the [documentation](https://minikube.sigs.k8s.io/docs/start/)
 
-### Configuration
-As stated previously, each 
+There are two main elements used to setup and configure Kubernetes:
+1. Minikube: It creates the kubernetes cluster.
+2. kubectl: this is the main way to interact with your nodes, retrieve information and configure them in kubernetes. It's installed by defailt with Minikube. 
 
+### Configuration
+
+As stated previously, each of the above components particularly in the worker node are prepared seperately by YAML script files, they will be linked together using labels. You can always check the [kubernetes documentation](https://kubernetes.io/docs/home/) for better understanding.
+
+Minikube sets up a Kubernetes cluster with a single node that acts as both the master and worker node. So as the node is installed it prepares the master node configurations in the backend, you can check the cluster's status by:
+
+```
+minikube status
+```
+
+to check the node's status, use kubectl:
+
+```
+kubectl get nodes
+
+# OR, for mode details
+
+kubectl get node -o wide
+```
+
+for more options about the cluster, check the help:
+```
+minikube -h
+```
+
+You can use other commands for info about your deployments, pods, IP server, start, delete, strop and many other configurations using the help command:
+
+```
+kubectl -h
+```
+
+### Write your first application
+This is a demo based on this [tutorial](https://www.youtube.com/watch?v=s_o8dwzRlu4) which will be demonstrated in detail:
+
+We'll create an application in two seperate pods, where one pod will contain a web application and the other will contain a databse container.
+
+# Step #1
