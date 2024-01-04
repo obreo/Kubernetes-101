@@ -104,8 +104,8 @@ metadata:
   name: mongo-secret            # This label will be used as a reference
 type: Opaque                    # Default type for storing secret data
 data:
-  username: YWRtaW4=            # Your data input.
-  password: cGFzc3dvcmQ=
+  username:             # Your data input.
+  password: 
 
 ```
 
